@@ -34,43 +34,34 @@ namespace OctData
 {
 
 	Series::Series(int internalId)
-	: internalId(internalId)
-	, sloImage(new SloImage)
-	, scanFocus(std::numeric_limits<double>::quiet_NaN())
+	    : internalId(internalId)
+	    , sloImage(std::make_unique<SloImage>())
+	    , scanFocus(std::numeric_limits<double>::quiet_NaN())
 	{
 
 	}
 
 
-	Series::~Series()
-	{
-		for(BScan* bscan : bscans)
-			delete bscan;
+	Series::~Series() = default;
 
-		delete sloImage;
-	}
-
-	void Series::takeBScan(OctData::BScan* bscan)
+	void Series::addBScan(std::shared_ptr<BScan> bscan)
 	{
-		bscans.push_back(bscan);
+		bscans.push_back(std::move(bscan));
 		calculateSLOConvexHull();
 		updateCornerCoords();
 	}
 
-	const BScan* Series::getBScan(std::size_t pos) const
+	const std::shared_ptr<const BScan> Series::getBScan(std::size_t pos) const
 	{
 		if(pos >= bscans.size())
 			return nullptr;
 		return bscans[pos];
 	}
 
-	void Series::takeSloImage(SloImage* slo)
+	void Series::takeSloImage(std::unique_ptr<SloImage> slo)
 	{
 		if(slo)
-		{
-			delete sloImage;
-			sloImage = slo;
-		}
+			sloImage = std::move(slo);
 	}
 
 
@@ -88,7 +79,10 @@ namespace OctData
 
 	void Series::updateCornerCoords()
 	{
-		BScan* bscan = bscans.back();
+		if(bscans.empty())
+			return;
+		
+		const std::shared_ptr<const BScan>& bscan = bscans.back();
 		if(!bscan)
 			return;
 
@@ -143,7 +137,7 @@ namespace OctData
 		};
 
 		PointsList points;
-		for(BScan* bscan : bscans)
+		for(const BScanList::value_type& bscan : bscans)
 		{
 			if(bscan)
 			{

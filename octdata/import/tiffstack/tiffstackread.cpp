@@ -4,11 +4,12 @@
 #include <datastruct/sloimage.h>
 #include <datastruct/bscan.h>
 
+#include<filesystem>
+
 #include <opencv2/opencv.hpp>
 
 // #include <cpp_framework/callback.h>
 
-#include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 
 #include <filereadoptions.h>
@@ -19,7 +20,7 @@
 
 #include<filereader/filereader.h>
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 namespace OctData
 {
@@ -31,7 +32,7 @@ namespace OctData
 
 	bool TiffStackRead::readFile(FileReader& filereader, OCT& oct, const FileReadOptions& /*op*/, CppFW::Callback* /*callback*/)
 	{
-		const boost::filesystem::path& file = filereader.getFilepath();
+		const std::filesystem::path& file = filereader.getFilepath();
 
 		if(file.extension() != ".tiff" && file.extension() != ".tif")
 			return false;
@@ -63,12 +64,11 @@ namespace OctData
 
 				cv::Mat bscanImage(imageLength, imageWidth, CV_MAKETYPE(cv::DataType<uint8_t>::type, 4));
 				if(TIFFReadRGBAImageOriented(tif, imageWidth, imageLength, bscanImage.ptr<uint32_t>(0), ORIENTATION_TOPLEFT, 0) != 0)
-					cv::cvtColor(bscanImage, bscanImage, CV_BGR2GRAY);
+					cv::cvtColor(bscanImage, bscanImage, cv::COLOR_BGR2GRAY);
 				else
 					bscanImage = cv::Mat();
 
-				BScan* bscan = new BScan(bscanImage, bscanData);
-				series.takeBScan(bscan);
+				series.addBScan(std::make_shared<BScan>(bscanImage, bscanData));
 
 				++dircount;
 			} while(TIFFReadDirectory(tif));

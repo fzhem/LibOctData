@@ -1,8 +1,8 @@
 #include "cvbinread.h"
 
 #include<locale>
+#include<filesystem>
 
-#include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -26,7 +26,7 @@
 
 #include<filereader/filereader.h>
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 
 namespace OctData
@@ -48,14 +48,8 @@ namespace OctData
 		}
 
 
-// 		const CppFW::CVMatTree* getDirNodeOptCamelCase(const CppFW::CVMatTree* node, const char* name)
-// 		{
-// 			if(node) return getDirNodeOptCamelCase(*node, name);
-// 			return nullptr;
-// 		}
-
 		// general export methods
-		SloImage* readSlo(const CppFW::CVMatTree* sloNode)
+		std::unique_ptr<SloImage> readSlo(const CppFW::CVMatTree* sloNode)
 		{
 			if(!sloNode)
 				return nullptr;
@@ -65,7 +59,7 @@ namespace OctData
 			const CppFW::CVMatTree* imgNode = sloNode->getDirNodeOpt("img");
 			if(imgNode && imgNode->type() == CppFW::CVMatTree::Type::Mat)
 			{
-				SloImage* slo = new SloImage();
+				std::unique_ptr<SloImage> slo = std::make_unique<SloImage>();
 				CppFW::GetFromCVMatTree sloWriter(*sloNode);
 				slo->getSetParameter(sloWriter);
 				slo->setImage(imgNode->getMat());
@@ -73,137 +67,6 @@ namespace OctData
 			}
 			return nullptr;
 		}
-
-		/*
-
-		class TreeImgGetter
-		{
-			cv::Mat createdImage;
-			bool extractRLE(const CppFW::CVMatTree* imgCompressNode)
-			{
-				int height = createdImage.rows;
-				int width  = createdImage.cols;
-				const std::size_t imageSize = static_cast<std::size_t>(height * width);
-
-
-				const cv::Mat& compressSymbols   = imgCompressNode->getDirNode("compressSymbols")  .getMat();
-				const cv::Mat& compressRunLength = imgCompressNode->getDirNode("compressRunLength").getMat();
-
-
-				if(cv::DataType<uint8_t> ::type != compressSymbols  .type()
-				|| cv::DataType<uint32_t>::type != compressRunLength.type())
-					return false;
-
-				if(compressSymbols.rows*compressSymbols.cols != compressRunLength.rows*compressRunLength.cols)
-					return false;
-
-				const int compDataLength = compressSymbols.rows*compressSymbols.cols;
-
-				      uint8_t * imgPtr        = createdImage     .ptr<uint8_t >();
-				const uint8_t * compSymbolPtr = compressSymbols  .ptr<uint8_t >();
-				const uint32_t* compRunLenPtr = compressRunLength.ptr<uint32_t>();
-
-				std::size_t imagePos = 0;
-				for(int i = 0; i < compDataLength; ++i)
-				{
-					uint8_t  symbol = *compSymbolPtr;
-					uint32_t number = *compRunLenPtr;
-
-					if(imagePos >= imageSize - number)
-						number = static_cast<uint32_t>(imageSize - imagePos - 1);
-
-					std::memset(imgPtr, symbol, number);
-
-					imagePos    += number;
-					imgPtr      += number;
-					++compSymbolPtr;
-					++compRunLenPtr;
-				}
-				return true;
-			}
-
-			bool extractRLEErrorHandling(const CppFW::CVMatTree* imgCompressNode)
-			{
-				try
-				{
-					return extractRLE(imgCompressNode);
-				}
-				catch(CppFW::CVMatTree::WrongType& e)
-				{
-					BOOST_LOG_TRIVIAL(error) << "extractRLE: Wrong type : " << e.what();
-				}
-				catch(std::out_of_range& e)
-				{
-					BOOST_LOG_TRIVIAL(error) << "extractRLE: 0ut of range : " << e.what();
-				}
-				return false;
-			}
-
-		public:
-
-			const cv::Mat* getCompreessMat(const CppFW::CVMatTree* bscanNode)
-			{
-				const CppFW::CVMatTree* imgCompressNode = bscanNode->getDirNodeOpt("imgCompress");
-
-				if(!imgCompressNode || imgCompressNode->type() != CppFW::CVMatTree::Type::Dir)
-					return nullptr;
-
-				const CppFW::CVMatTree* compressMethodNode = imgCompressNode->getDirNodeOpt("compressMethod");
-
-				if(!compressMethodNode || compressMethodNode->type() != CppFW::CVMatTree::Type::String)
-					return nullptr;
-
-
-				if(compressMethodNode->getString() != "RLE") // Lauflängenkodierung / run-length encoding
-				{
-					BOOST_LOG_TRIVIAL(error) << "Unknown compress method " << compressMethodNode->getString();
-					return nullptr;
-				}
-
-				int imageHeight = CppFW::CVMatTreeExtra::getCvScalar(imgCompressNode, "height", uint32_t());
-				int imageWidth  = CppFW::CVMatTreeExtra::getCvScalar(imgCompressNode, "width" , uint32_t());
-				if(imageHeight == 0 || imageWidth == 0)
-					return nullptr;
-
-				createdImage = cv::Mat(imageHeight, imageWidth, cv::DataType<uint8_t>::type);
-
-				if(!extractRLEErrorHandling(imgCompressNode))
-					return nullptr;
-
-				return &createdImage;
-			}
-
-			const cv::Mat* get(const CppFW::CVMatTree* bscanNode)
-			{
-				const CppFW::CVMatTree* seriesImgNode = bscanNode->getDirNodeOpt("img");
-
-				if(!seriesImgNode || seriesImgNode->type() != CppFW::CVMatTree::Type::Mat)
-					return getCompreessMat(bscanNode);
-
-				return &(seriesImgNode->getMat());
-			}
-
-			void setBScanCoords(BScan::Data& bscanData, const CppFW::CVMatTree* bscanNode)
-			{
-				const CppFW::CVMatTree* bscanCoordNode = bscanNode->getDirNodeOpt("Coords");
-				if(bscanCoordNode)
-				{
-					const CppFW::CVMatTree* bscanCoordStartNode = bscanCoordNode->getDirNodeOpt("Start");
-					const CppFW::CVMatTree* bscanCoordEndNode   = bscanCoordNode->getDirNodeOpt("End");
-					if(bscanCoordStartNode)
-					{
-						bscanData.start = CoordSLOmm(CppFW::CVMatTreeExtra::getCvScalar(bscanCoordStartNode, double(), 0)
-						                           , CppFW::CVMatTreeExtra::getCvScalar(bscanCoordStartNode, double(), 1));
-					}
-					if(bscanCoordEndNode)
-					{
-						bscanData.end = CoordSLOmm(CppFW::CVMatTreeExtra::getCvScalar(bscanCoordEndNode, double(), 0)
-						                         , CppFW::CVMatTreeExtra::getCvScalar(bscanCoordEndNode, double(), 1));
-					}
-				}
-			}
-		};
-*/
 
 		void fillSegmentationsLines(const CppFW::CVMatTree* segNode, BScan::Data& bscanData)
 		{
@@ -229,12 +92,12 @@ namespace OctData
 			}
 		}
 
-		BScan* readBScan(const CppFW::CVMatTree* bscanNode)
+		std::shared_ptr<BScan> readBScan(const CppFW::CVMatTree* bscanNode)
 		{
 			if(!bscanNode)
 				return nullptr;
 
-			BScan* bscan = nullptr;
+			std::shared_ptr<BScan> bscan;
 			const CppFW::CVMatTree* imgNode = bscanNode->getDirNodeOpt("img");
 			if(imgNode)
 			{
@@ -258,7 +121,7 @@ namespace OctData
 					const CppFW::CVMatTree* seriesSegNode = getDirNodeOptCamelCase(*bscanNode, "segmentations");
 					fillSegmentationsLines(seriesSegNode, bscanData);
 
-					bscan = new BScan(img, bscanData);
+					bscan = std::make_shared<BScan>(img, bscanData);
 
 					CppFW::GetFromCVMatTree bscanReader(bscanNode->getDirNodeOpt("data"));
 					bscan->getSetParameter(bscanReader);
@@ -283,9 +146,9 @@ namespace OctData
 				if(++bscanCallbackStepper == false)
 					return false;
 
-				BScan* bscan = readBScan(bscanNode);
+				std::shared_ptr<BScan> bscan = readBScan(bscanNode);
 				if(bscan)
-					series.takeBScan(bscan);
+					series.addBScan(std::move(bscan));
 			}
 			return true;
 		}
@@ -418,7 +281,7 @@ namespace OctData
 
 	bool CvBinRead::readFile(FileReader& filereader, OCT& oct, const FileReadOptions& /*op*/, CppFW::Callback* callback)
 	{
-		const boost::filesystem::path& file = filereader.getFilepath();
+		const std::filesystem::path& file = filereader.getFilepath();
 //
 //     BOOST_LOG_TRIVIAL(trace)   << "A trace severity message";
 //     BOOST_LOG_TRIVIAL(debug)   << "A debug severity message";

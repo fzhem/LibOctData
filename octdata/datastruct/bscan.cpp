@@ -21,7 +21,7 @@
 #include<cmath>
 #include<exception>
 
-#include <opencv/cv.hpp>
+#include <opencv2/opencv.hpp>
 
 
 namespace OctData

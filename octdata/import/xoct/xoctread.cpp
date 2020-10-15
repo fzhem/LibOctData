@@ -5,8 +5,8 @@
 #include<sstream>
 #include <thread>
 #include <chrono>
+#include<filesystem>
 
-#include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -30,7 +30,7 @@
 #include <octfileread.h>
 #include<filereader/filereader.h>
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 namespace bpt = boost::property_tree;
 namespace bip = boost::interprocess;
 namespace qi = boost::spirit::qi;
@@ -142,13 +142,13 @@ namespace OctData
 			return cv::Mat();
 		}
 
-		SloImage* readSlo(const bpt::ptree& sloNode, CppFW::UnzipCpp& zipfile)
+		std::unique_ptr<SloImage> readSlo(const bpt::ptree& sloNode, CppFW::UnzipCpp& zipfile)
 		{
 			cv::Mat sloImage = readImage(sloNode, zipfile, "image");
 			if(sloImage.empty())
 				return nullptr;
 
-			SloImage* slo = new SloImage();
+			std::unique_ptr<SloImage> slo = std::make_unique<SloImage>();
 			slo->setImage(sloImage);
 			readDataNode(sloNode, *slo);
 			return slo;
@@ -164,7 +164,7 @@ namespace OctData
 			}
 		}
 
-		BScan* readBScan(const bpt::ptree& bscanNode, CppFW::UnzipCpp& zipfile)
+		std::shared_ptr<BScan> readBScan(const bpt::ptree& bscanNode, CppFW::UnzipCpp& zipfile)
 		{
 			cv::Mat bscanImg = readImage(bscanNode, zipfile, "image");
 			if(bscanImg.empty())
@@ -182,7 +182,7 @@ namespace OctData
 			}
 			catch(...) {}
 
-			BScan* bscan = new BScan(bscanImg, bscanData);
+			std::shared_ptr<BScan> bscan = std::make_shared<BScan>(bscanImg, bscanData);
 
 			if(!imageAngio.empty())
 				bscan->setAngioImage(imageAngio);
@@ -205,9 +205,9 @@ namespace OctData
 				if(++bscanCallbackStepper == false)
 					return false;
 
-				BScan* bscan = readBScan(subTreePair.second, zipfile);
+				std::shared_ptr<BScan> bscan = readBScan(subTreePair.second, zipfile);
 				if(bscan)
-					series.takeBScan(bscan);
+					series.addBScan(std::move(bscan));
 			}
 			return true;
 		}
@@ -284,7 +284,7 @@ namespace OctData
 
 	bool OctData::XOctRead::readFile(OctData::FileReader& filereader, OctData::OCT& oct, const OctData::FileReadOptions& op, CppFW::Callback* callback)
 	{
-		const boost::filesystem::path& file = filereader.getFilepath();
+		const std::filesystem::path file = filereader.getFilepath();
 		if(file.extension() != ".xoct")
 			return false;
 

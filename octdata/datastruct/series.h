@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <memory>
 #include "date.h"
 #include "analysegrid.h"
 
@@ -52,17 +53,17 @@ namespace OctData
 		typedef ObjectWrapper<ScanPattern      > ScanPatternEnumWrapper      ;
 		typedef ObjectWrapper<ExaminedStructure> ExaminedStructureEnumWrapper;
 
-		typedef std::vector<BScan*> BScanList;
+		typedef std::vector<std::shared_ptr<const BScan>> BScanList;
 		typedef std::vector<CoordSLOmm> BScanSLOCoordList;
 
 		Octdata_EXPORTS explicit Series(int internalId);
 		Octdata_EXPORTS ~Series();
 
 		Octdata_EXPORTS const SloImage& getSloImage()            const { return *sloImage; }
-		Octdata_EXPORTS void takeSloImage(SloImage* sloImage);
+		Octdata_EXPORTS void takeSloImage(std::unique_ptr<SloImage> sloImage);
 
 		Octdata_EXPORTS const BScanList getBScans()              const { return bscans;    }
-		Octdata_EXPORTS const BScan* getBScan(std::size_t pos) const;
+		Octdata_EXPORTS const std::shared_ptr<const BScan> getBScan(std::size_t pos) const;
 		Octdata_EXPORTS std::size_t bscanCount()                 const { return bscans.size(); }
 
 		Octdata_EXPORTS Laterality getLaterality()               const { return laterality; }
@@ -93,7 +94,7 @@ namespace OctData
 		Octdata_EXPORTS void setScanFocus(double focus)                { scanFocus = focus; }
 		Octdata_EXPORTS double getScanFocus()                    const { return scanFocus;  }
 
-		Octdata_EXPORTS void takeBScan(BScan* bscan);
+		Octdata_EXPORTS void addBScan(std::shared_ptr<BScan> bscan);
 
 		Octdata_EXPORTS void setDescription(const std::string& text)   { description = text; }
 		Octdata_EXPORTS const std::string& getDescription()      const { return description; }
@@ -114,7 +115,7 @@ namespace OctData
 	private:
 		const int internalId;
 
-		SloImage*                               sloImage = nullptr;
+		std::unique_ptr<SloImage>               sloImage;
 		std::string                             seriesUID;
 		std::string                             refSeriesID;
 		double                                  scanFocus;

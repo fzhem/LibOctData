@@ -30,7 +30,7 @@ namespace OctData
 	{
 		gzFile file;
 	public:
-		FileStreamGZip(const boost::filesystem::path& filepath);
+		FileStreamGZip(const std::filesystem::path& filepath);
 		virtual ~FileStreamGZip();
 
 

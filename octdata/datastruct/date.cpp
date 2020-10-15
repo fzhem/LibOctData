@@ -21,10 +21,6 @@
 // #include<boost/spirit/include/qi.hpp>
 // #include<boost/phoenix/phoenix.hpp>
 
-#ifdef _MSC_VER
-	#define timegm _mkgmtime
-#endif
-
 namespace
 {
 	const long long windowsTicksToUnixFactor = 10000000;
@@ -62,7 +58,7 @@ namespace OctData
 
 	Date::TimeCollection Date::convertTime(int year, int month, int day, int hour, int min, double sec, bool withTime)
 	{
-		struct tm timeinfo{};
+		std::tm timeinfo{};
 
 		timeinfo.tm_year = year - 1900;
 		timeinfo.tm_mon  = month - 1;
@@ -73,9 +69,9 @@ namespace OctData
 			timeinfo.tm_min  = min;
 			timeinfo.tm_sec  = static_cast<int>(sec);
 		}
-
+		
 		TimeCollection time;
-		time.unixtime = timegm(&timeinfo);
+		time.unixtime = std::mktime (&timeinfo);
 		time.ms       = static_cast<int>((sec - std::floor(sec))*1000);
 		return time;
 	}

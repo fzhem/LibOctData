@@ -17,19 +17,21 @@
 
 #include "octfileread.h"
 
+#include<filesystem>
+
 #include <datastruct/oct.h>
 #include "import/octfilereader.h"
 #include "filereadoptions.h"
 #include "filewriteoptions.h"
 
-#include<opencv/cv.hpp>
+
+#include<opencv2/opencv.hpp>
 
 #include "buildconstants.h"
 
 #include <boost/log/trivial.hpp>
 
-#include <boost/filesystem.hpp>
-namespace bfs = boost::filesystem;
+namespace sfs = std::filesystem;
 
 #include<filereader/filereader.h>
 
@@ -71,7 +73,7 @@ namespace OctData
 		return getInstance().openFilePrivat(filename, op, callback);
 	}
 
-	OCT OctFileRead::openFile(const boost::filesystem::path& filename, const FileReadOptions& op, CppFW::Callback* callback)
+	OCT OctFileRead::openFile(const std::filesystem::path& filename, const FileReadOptions& op, CppFW::Callback* callback)
 	{
 		return getInstance().openFilePrivat(filename, op, callback);
 	}
@@ -80,7 +82,7 @@ namespace OctData
 
 	OCT OctFileRead::openFilePrivat(const std::string& filename, const FileReadOptions& op, CppFW::Callback* callback)
 	{
-		bfs::path file(filenameConv(filename));
+		sfs::path file(filename);
 		return openFilePrivat(file, op, callback);
 	}
 
@@ -112,12 +114,12 @@ namespace OctData
 		return false;
 	}
 
-	OCT OctFileRead::openFilePrivat(const boost::filesystem::path& file, const FileReadOptions& op, CppFW::Callback* callback)
+	OCT OctFileRead::openFilePrivat(const std::filesystem::path& file, const FileReadOptions& op, CppFW::Callback* callback)
 	{
 		FileReader filereader(file);
 		OctData::OCT oct;
 
-		if(bfs::exists(file))
+		if(sfs::exists(file))
 		{
 			if(!openFileFromExt(oct, filereader, op, callback))
 				tryOpenFile(oct, filereader, op, callback);
@@ -170,13 +172,13 @@ namespace OctData
 		return getInstance().writeFilePrivat(filename, octdata, opt);
 	}
 
-	bool OctFileRead::writeFile(const bfs::path& filepath, const OCT& octdata, const FileWriteOptions& opt)
+	bool OctFileRead::writeFile(const sfs::path& filepath, const OCT& octdata, const FileWriteOptions& opt)
 	{
 		return getInstance().writeFilePrivat(filepath, octdata, opt);
 	}
 
 
-	bool OctFileRead::writeFilePrivat(const bfs::path& filepath, const OCT& octdata, const FileWriteOptions& opt)
+	bool OctFileRead::writeFilePrivat(const sfs::path& filepath, const OCT& octdata, const FileWriteOptions& opt)
 	{
 		if(filepath.extension() == ".img")
 			return CirrusRawExport::writeFile(filepath, octdata, opt);

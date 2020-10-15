@@ -21,10 +21,10 @@
 #include<fstream>
 #include<iomanip>
 #include<memory>
+#include<filesystem>
 
 #include<opencv2/opencv.hpp>
 
-#include<boost/filesystem.hpp>
 #include<boost/algorithm/string/classification.hpp>
 #include<boost/algorithm/string/split.hpp>
 #include<boost/lexical_cast.hpp>
@@ -40,7 +40,7 @@
 #include<datastruct/bscan.h>
 
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 
 namespace OctData
@@ -79,20 +79,20 @@ namespace OctData
 		}
 	}
 
-	bool CirrusRawExport::writeFile(const boost::filesystem::path& file, const OctData::OCT& oct, const OctData::FileWriteOptions& opt)
+	bool CirrusRawExport::writeFile(const std::filesystem::path& file, const OctData::OCT& oct, const OctData::FileWriteOptions& opt)
 	{
 		OCT::SubstructureCIterator pat = oct.begin();
-		const Patient* p = pat->second;
+		const std::shared_ptr<Patient>& p = pat->second;
 		if(!p)
 			return false;
 
 		Patient::SubstructureCIterator study = p->begin();
-		const Study* s = study->second;
+		const std::shared_ptr<Study>& s = study->second;
 		if(!s)
 			return false;
 
 		Study::SubstructureCIterator series = s->begin();
-		const Series* ser = series->second;
+		const std::shared_ptr<Series>& ser = series->second;
 
 		if(!ser)
 			return false;
@@ -101,16 +101,14 @@ namespace OctData
 	}
 
 
-	bool CirrusRawExport::writeFile(const boost::filesystem::path& file
+	bool CirrusRawExport::writeFile(const std::filesystem::path& file
 	                              , const OCT&              /*oct*/
 	                              , const Patient&          pat
 	                              , const Study&            study
 	                              , const Series&           series
 	                              , const FileWriteOptions& /*opt*/)
 	{
-		// P1270HZ_Optic Disc Cube 200x200_9-21-2010_11-42-13_OS_sn0415_cube_raw.img
-
-		const BScan* bscan = series.getBScan(0);
+		const std::shared_ptr<const BScan> bscan = series.getBScan(0);
 		if(!bscan)
 			return false;
 
@@ -186,7 +184,7 @@ namespace OctData
 		                     + cube       + '_'
 		                     + filetype   + ".img";
 
-		bfs::path exportpath = file.branch_path() / filename;
+		bfs::path exportpath = file.parent_path() / filename;
 
 		std::ofstream stream(exportpath.generic_string(), std::ios_base::binary);
 

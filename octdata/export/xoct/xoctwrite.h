@@ -17,8 +17,7 @@
 
 #pragma once
 
-namespace boost { namespace filesystem { class path; } }
-
+#include<filesystem>
 
 namespace OctData
 {
@@ -31,7 +30,7 @@ namespace OctData
 	class XOctWrite
 	{
 	public:
-		static bool writeFile(const boost::filesystem::path& file, const OCT& oct, const FileWriteOptions& opt);
+		static bool writeFile(const std::filesystem::path& file, const OCT& oct, const FileWriteOptions& opt);
 	};
 }
 

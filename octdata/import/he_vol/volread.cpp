@@ -8,10 +8,9 @@
 #include <thread>
 #include <chrono>
 #include <ctime>
+#include<filesystem>
 
 #include <opencv2/opencv.hpp>
-
-#include <boost/filesystem.hpp>
 
 #include "../../octdata_packhelper.h"
 #include <filereadoptions.h>
@@ -26,7 +25,7 @@
 
 #include<filereader/filereader.h>
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 
 namespace
@@ -341,10 +340,12 @@ namespace OctData
 		cv::Mat sloImage;
 		filereader.readCVImage<uint8_t>(sloImage, volHeader.data.sizeXSlo, volHeader.data.sizeYSlo);
 
-		SloImage* slo = new SloImage;
-		slo->setImage(sloImage);
-		slo->setScaleFactor(ScaleFactor(volHeader.data.scaleXSlo, volHeader.data.scaleYSlo));
-		series.takeSloImage(slo);
+		{
+			std::unique_ptr<SloImage> slo = std::make_unique<SloImage>();
+			slo->setImage(sloImage);
+			slo->setScaleFactor(ScaleFactor(volHeader.data.scaleXSlo, volHeader.data.scaleYSlo));
+			series.takeSloImage(std::move(slo));
+		}
 
 
 		const std::size_t numBScans = op.readBScans?volHeader.data.numBScans:1;
@@ -460,10 +461,10 @@ namespace OctData
 			if(!filereader.good())
 				break;
 
-			BScan* bscan = new BScan(bscanImageConv, bscanData);
+			std::shared_ptr<BScan> bscan = std::make_shared<BScan>(bscanImageConv, bscanData);
 			if(op.holdRawData)
 				bscan->setRawImage(bscanImage);
-			series.takeBScan(bscan);
+			series.addBScan(std::move(bscan));
 		}
 
 		if(volHeader.data.gridType > 0 && volHeader.data.gridOffset > 2000)

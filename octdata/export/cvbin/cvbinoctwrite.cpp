@@ -17,6 +17,8 @@
 
 #include "cvbinoctwrite.h"
 
+#include<filesystem>
+
 #include <datastruct/oct.h>
 #include <datastruct/coordslo.h>
 #include <datastruct/sloimage.h>
@@ -24,7 +26,6 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <filewriteoptions.h>
@@ -40,7 +41,7 @@
 #include <octfileread.h>
 
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 
 namespace OctData
@@ -64,7 +65,7 @@ namespace OctData
 			imgNode.getMat() = image;
 		}
 
-		void writeBScan(CppFW::CVMatTree& seriesNode, const BScan* bscan)
+		void writeBScan(CppFW::CVMatTree& seriesNode, const std::shared_ptr<const BScan>& bscan)
 		{
 			if(!bscan)
 				return;
@@ -118,7 +119,7 @@ namespace OctData
 
 			CppFW::CVMatTree& seriesNode = tree.getDirNode("bscans");
 
-			for(BScan* bscan : series.getBScans())
+			for(const std::shared_ptr<const BScan>& bscan : series.getBScans())
 				writeBScan(seriesNode, bscan);
 
 			return true;
@@ -148,7 +149,7 @@ namespace OctData
 			writeSlo(octtree.getDirNode("slo"), series.getSloImage());
 
 			CppFW::CVMatTree& seriesNode = octtree.getDirNode("serie");
-			for(BScan* bscan : series.getBScans())
+			for(const std::shared_ptr<const BScan>& bscan : series.getBScans())
 				writeBScan(seriesNode, bscan);
 
 			return true;
@@ -157,17 +158,17 @@ namespace OctData
 		bool writeFlatFile(CppFW::CVMatTree& octtree, const OCT& oct)
 		{
 			OCT::SubstructureCIterator pat = oct.begin();
-			const Patient* p = pat->second;
+			const std::shared_ptr<Patient>& p = pat->second;
 			if(!p)
 				return false;
 
 			Patient::SubstructureCIterator study = p->begin();
-			const Study* s = study->second;
+			const std::shared_ptr<Study>& s = study->second;
 			if(!s)
 				return false;
 
 			Study::SubstructureCIterator series = s->begin();
-			const Series* ser = series->second;
+			const std::shared_ptr<Series>& ser = series->second;
 
 			if(!ser)
 				return false;
@@ -183,7 +184,7 @@ namespace OctData
 			tree.getDirNode(nodeName).getString() = value;
 	}
 
-	bool CvBinOctWrite::writeFile(const boost::filesystem::path& file, const OCT& oct, const FileWriteOptions& opt)
+	bool CvBinOctWrite::writeFile(const std::filesystem::path& file, const OCT& oct, const FileWriteOptions& opt)
 	{
 		CppFW::CVMatTree octtree;
 

@@ -18,6 +18,7 @@
 #pragma once
 
 #include<string>
+#include<vector>
 #include"datastruct/objectwrapper.h"
 
 namespace OctData
@@ -37,6 +38,10 @@ namespace OctData
 		bool readBScans          = true;
 
 		bool dumpFileParts       = false;
+		
+		int readBScanNum         = -1;
+		
+		std::vector<int> xorTest;
 
 		E2eGrayTransform e2eGray = E2eGrayTransform::xml;
 
@@ -57,7 +62,11 @@ namespace OctData
 			getSet("holdRawData"        , p.holdRawData                            );
 			getSet("loadRefFiles"       , p.loadRefFiles                           );
 			getSet("readBScans"         , p.readBScans                             );
+			getSet("readBScanNum"       , p.readBScanNum                           );
 			getSet("e2eGrayTransform"   , static_cast<std::string&>(e2eGrayWrapper));
+			
+			
+			getSet("xorTest"       , p.xorTest                           );
 		}
 	};
 }

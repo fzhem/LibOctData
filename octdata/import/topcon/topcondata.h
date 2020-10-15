@@ -1,6 +1,7 @@
 #pragma once
 
-#include<opencv/cv.hpp>
+
+#include<opencv2/opencv.hpp>
 #include<datastruct/bscan.h>
 #include<datastruct/series.h>
 #include<datastruct/sloimage.h>
@@ -60,7 +61,7 @@ struct TopconData
 
 	struct SloData
 	{
-		OctData::SloImage* sloImage = nullptr;
+		std::unique_ptr<OctData::SloImage> sloImage;
 		SloRegistData registData;
 	};
 

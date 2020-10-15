@@ -93,7 +93,7 @@ namespace
 			case OctData::Series::ScanPattern::Volume  : applySloDataRect  (data, sloData); break;
 			default: break;
 		}
-		data.series.takeSloImage(sloData.sloImage);
+		data.series.takeSloImage(std::move(sloData.sloImage));
 	}
 }
 
@@ -119,8 +119,8 @@ void TopconData::transferData2Series()
 	for(BScanPair& pair : bscanList)
 	{
 		OctData::BScan::Data bscanData;
-		OctData::BScan* bscan = new OctData::BScan(pair.image, pair.data);
+		auto bscan = std::make_shared<OctData::BScan>(pair.image, pair.data);
 
-		series.takeBScan(bscan);
+		series.addBScan(std::move(bscan));
 	}
 }

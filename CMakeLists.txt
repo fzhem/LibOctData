@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 project(liboctdata)
 include(GenerateExportHeader)
 
-set( CMAKE_CXX_STANDARD 11 )
+set( CMAKE_CXX_STANDARD 17 )
 
 # set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -38,16 +38,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_module/)
 find_package(OctCppFramework REQUIRED)
 
 
-if(${WIN32})
-	# set(Boost_DEBUG ON)
-	# set(Boost_LIB_PREFIX "libboost")
-else()
+if(CMAKE_COMPILER_IS_GNUCXX)
 	ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
 endif()
 
 
 
-find_package(Boost 1.40 COMPONENTS filesystem system locale log serialization REQUIRED)
+find_package(Boost 1.40 COMPONENTS locale log serialization REQUIRED)
 find_package(OpenCV REQUIRED)
 string(TIMESTAMP CMAKE_CONFIGURE_TIME "%Y-%m-%dT%H:%M:%SZ" UTC)
 
@@ -108,7 +105,6 @@ if(BUILD_WITH_SUPPORT_TOPCON)
 		list(APPEND import_srcs import/topcon)
 		add_definitions(-DTOPCON_FILE_SUPPORT)
 		include_directories(SYSTEM ${OPENJPEG_INCLUDE_DIRS})
-		message(${OPENJPEG_INCLUDE_DIRS})
 	endif()
 endif()
 
@@ -162,10 +158,9 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 if(CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wunreachable-code -Werror -Wconversion -Wold-style-cast")        ## -Weverything
-	set(CMAKE_CFLAGS "${CMAKE_CFLAGS} -fPIC")
 
 	if(${WIN32})
-		set(CMAKE_CXX_FLAGS "-mno-ms-bitfields -static -static-libstdc++ ${CMAKE_CXX_FLAGS}")
+		string(APPEND CMAKE_CXX_FLAGS " -mno-ms-bitfields")
 	endif()
 endif()
 
@@ -191,9 +186,9 @@ add_custom_target(headers SOURCES ${includefiles})
 add_library(octdata SHARED ${liboctdata_SRCS})
 
 
-IF(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
+IF(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" AND NOT "${WIN32}" )
   SET_TARGET_PROPERTIES(octdata PROPERTIES COMPILE_FLAGS "-fPIC")
-ENDIF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
+ENDIF()
 
 
 # add a target to generate API documentation with Doxygen
@@ -228,8 +223,7 @@ GENERATE_EXPORT_HEADER(octdata           # generates the export header shared_EX
 	EXPORT_FILE_NAME octdata_EXPORTS.h
 	STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC)
 
-
-add_definitions(-DOCTDATA_EXPORT)
+target_compile_definitions(octdata PRIVATE "octdata_EXPORTS")
 
 add_executable(liboctdata_test main.cpp)
 target_link_libraries(liboctdata_test octdata ${OpenCV_LIBRARIES} )
@@ -272,7 +266,6 @@ export(EXPORT LibOctDataTargets
 )
 configure_file(cmake/LibOctDataConfig.cmake
   "${CMAKE_CURRENT_BINARY_DIR}/liboctdata/LibOctDataConfig.cmake"
-  COPY_ONLY
 )
 
 target_include_directories(

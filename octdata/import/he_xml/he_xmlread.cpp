@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <fstream>
+#include<filesystem>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -13,8 +14,6 @@
 #include <datastruct/series.h>
 #include <datastruct/bscan.h>
 #include <datastruct/oct.h>
-
-#include <boost/filesystem.hpp>
 
 #include "../platform_helper.h"
 #include <filereadoptions.h>
@@ -29,7 +28,7 @@
 #include<filereader/filereader.h>
 
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 namespace bpt = boost::property_tree;
 
 
@@ -89,12 +88,12 @@ namespace OctData
 
 		void fillSLOImage(const bpt::ptree& imageNode, Series& series, const std::string& xmlPath)
 		{
-			SloImage* slo = new SloImage;
+			std::unique_ptr<SloImage> slo = std::make_unique<SloImage>();
 
 			slo->setScaleFactor(readScaleFactor(imageNode.get_child("OphthalmicAcquisitionContext")));
 			std::string filepath = xmlPath + '/' + getFilename(imageNode);
 			slo->setImage(cv::imread(filepath, true));
-			series.takeSloImage(slo);
+			series.takeSloImage(std::move(slo));
 		}
 
 		Date readDate(const bpt::ptree& dateNode)
@@ -214,7 +213,7 @@ namespace OctData
 					bscanData.acquisitionTime = readDateTime(*studyDateNode, *imageTimeNode);
 			}
 
-			series.takeBScan(new BScan(image, bscanData));
+			series.addBScan(std::make_unique<BScan>(image, bscanData));
 
 		}
 
@@ -229,24 +228,24 @@ namespace OctData
 
 	bool HeXmlRead::readFile(FileReader& filereader, OCT& oct, const FileReadOptions& op, CppFW::Callback* callback)
 	{
-		const boost::filesystem::path& file = filereader.getFilepath();
+		const std::filesystem::path& file = filereader.getFilepath();
 		if(file.extension() != ".xml")
 			return false;
 
 
 		BOOST_LOG_TRIVIAL(trace) << "Try to open Heidelberg Engineering Xml file as vol";
 
-		std::string xmlPath     = file.branch_path().generic_string();
+		std::string xmlPath     = file.parent_path().generic_string();
 		// std::string xmlFilename = file.filename().generic_string();
 
 		// Create an empty property tree object
 		bpt::ptree pt;
 
 
-		std::fstream stream(filepathConv(file), std::ios::binary | std::ios::in);
+		std::fstream stream(file, std::ios::binary | std::ios::in);
 		if(!stream.good())
 		{
-			BOOST_LOG_TRIVIAL(error) << "Can't open vol file " << filepathConv(file);
+			BOOST_LOG_TRIVIAL(error) << "Can't open vol file " << file;
 			return false;
 		}
 

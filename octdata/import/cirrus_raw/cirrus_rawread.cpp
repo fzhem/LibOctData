@@ -8,10 +8,10 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include<filesystem>
 
 #include <opencv2/opencv.hpp>
 
-#include <boost/filesystem.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
@@ -21,7 +21,7 @@
 
 #include <boost/log/trivial.hpp>
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 
 namespace
@@ -46,7 +46,7 @@ namespace OctData
 
 	bool CirrusRawRead::readFile(FileReader& filereader, OCT& oct, const FileReadOptions& /*op*/, CppFW::Callback* callback)
 	{
-		const boost::filesystem::path& file = filereader.getFilepath();
+		const std::filesystem::path& file = filereader.getFilepath();
 
 		if(filereader.getExtension() != ".img")
 			return false;
@@ -172,7 +172,7 @@ end
 		Patient& pat    = oct.getPatient(0);
 		Series&  series = pat.getStudy(0).getSeries(0);
 
-		std::vector<BScan*> bscanList;
+		std::vector<std::shared_ptr<BScan>> bscanList;
 
 		BScan::Data data;
 		data.scaleFactor = sf;
@@ -187,13 +187,15 @@ end
 			cv::Mat bscanImage;
 // 			readCVImage<uint8_t>(stream, bscanImage, volSizeZ, volSizeX);
 			filereader.readCVImage<uint8_t>(bscanImage, volSizeZ, volSizeX);
-			cv::flip(bscanImage, bscanImage, -1);
+// 			cv::flip(bscanImage, bscanImage, -1);
+			cv::transpose(bscanImage, bscanImage);
+			cv::flip(bscanImage, bscanImage, 1);
 
-			bscanList.push_back(new BScan(bscanImage, data));
+			bscanList.push_back(std::make_shared<BScan>(bscanImage, data));
 		}
 
-		for(std::vector<BScan*>::reverse_iterator it = bscanList.rbegin(); it != bscanList.rend(); ++it)
-			series.takeBScan(*it);
+		for(std::vector<std::shared_ptr<BScan>>::reverse_iterator it = bscanList.rbegin(); it != bscanList.rend(); ++it)
+			series.addBScan(*it);
 
 		//------------
 		// load slo
@@ -217,12 +219,13 @@ end
 
 		std::size_t sloWidth = 512;
 		readCVImage<uint8_t>(streamSlo, sloImage, sloWidth, filesizeSlo/sloWidth);
-		SloImage* slo = new SloImage;
+		std::unique_ptr<SloImage> slo = std::make_unique<SloImage>();
 		slo->setImage(sloImage);
-		series.takeSloImage(slo);
 
 		if(debug)
 			std::cout << "slo: " << sloWidth << " x " << (filesizeSlo/sloWidth) << std::endl;
+		
+		series.takeSloImage(std::move(slo));
 		return true;
 	}
 

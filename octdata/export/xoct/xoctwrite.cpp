@@ -18,9 +18,9 @@
 #include "xoctwrite.h"
 
 #include<fstream>
+#include<filesystem>
 
 
-#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -95,14 +95,12 @@ namespace OctData
 		class XOctWritter
 		{
 			CppFW::ZipCpp& zipfile;
-// 			const OctData::FileWriteOptions& opt;
 			std::string imageExtention;
 			bool compressImage = false;
 		public:
 			XOctWritter(CppFW::ZipCpp& zipfile
 			          , const OctData::FileWriteOptions& opt)
 			: zipfile(zipfile)
-// 			, opt(opt)
 			{
 				switch(opt.xoctImageFormat)
 				{
@@ -114,7 +112,7 @@ namespace OctData
 						break;
 					case FileWriteOptions::XoctImageFormat::zippedBMP:
 						compressImage = true;
-// 						[[fallthrough]];
+ 						[[fallthrough]];
 					case FileWriteOptions::XoctImageFormat::bmp:
 						imageExtention = ".bmp";
 						break;
@@ -169,7 +167,7 @@ namespace OctData
 			}
 
 
-			void writeBScan(bpt::ptree& seriesNode, const BScan* bscan, std::size_t bscanNum, const std::string& dataPath)
+			void writeBScan(bpt::ptree& seriesNode, const std::shared_ptr<const BScan>& bscan, std::size_t bscanNum, const std::string& dataPath)
 			{
 				if(!bscan)
 					return;
@@ -278,7 +276,7 @@ namespace OctData
 			writeSlo(tree.add("slo", ""), series.getSloImage(), dataPath);
 
 			std::size_t bscanNum = 0;
-			for(BScan* bscan : series.getBScans())
+			for(const std::shared_ptr<const BScan>& bscan : series.getBScans())
 				writeBScan(tree, bscan, bscanNum++, dataPath);
 
 			return true;
@@ -287,7 +285,7 @@ namespace OctData
 
 
 
-	bool XOctWrite::writeFile(const boost::filesystem::path& file, const OctData::OCT& oct, const OctData::FileWriteOptions& opt)
+	bool XOctWrite::writeFile(const std::filesystem::path& file, const OctData::OCT& oct, const OctData::FileWriteOptions& opt)
 	{
 		CppFW::ZipCpp zipfile(file.generic_string());
 

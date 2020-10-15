@@ -2,6 +2,7 @@
 
 #define _USE_MATH_DEFINES
 #include<cmath>
+#include<cctype>
 
 #include <datastruct/oct.h>
 #include <datastruct/coordslo.h>
@@ -12,10 +13,9 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include<filesystem>
 
 #include <opencv2/opencv.hpp>
-
-#include <boost/filesystem.hpp>
 
 #include <E2E/e2edata.h>
 #include <E2E/dataelements/patientdataelement.h>
@@ -42,7 +42,7 @@
 #include<filereader/filereader.h>
 
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 namespace loc = boost::locale;
 
 
@@ -156,7 +156,7 @@ namespace OctData
 			if(!e2eSlo)
 				return;
 
-			SloImage* slo = new SloImage;
+			std::unique_ptr<SloImage> slo = std::make_unique<SloImage>();
 
 			const cv::Mat e2eSloImage = e2eSlo->getImage();
 
@@ -204,7 +204,7 @@ namespace OctData
 			slo->setScaleFactor(ScaleFactor(factor/sizeX, factor/sizeY));
 			slo->setShift(CoordSLOpx(sizeX/2.,
 			                         sizeY/2.));
-			series.takeSloImage(slo);
+			series.takeSloImage(std::move(slo));
 		}
 
 		void addSegData(BScan::Data& bscanData, Segmentationlines::SegmentlineType segType, const E2E::BScan::SegmentationMap& e2eSegMap, int index, int type, const E2E::ImageRegistration* reg, std::size_t imagecols)
@@ -471,7 +471,7 @@ namespace OctData
 
 			transformImage(reg, bscanImageConv, op.fillEmptyPixelWhite);
 
-			BScan* bscan = new BScan(bscanImageConv, bscanData);
+			std::shared_ptr<BScan> bscan = std::make_shared<BScan>(bscanImageConv, bscanData);
 			if(op.holdRawData)
 				bscan->setRawImage(e2eImage);
 			if(e2eAngioImg)
@@ -482,7 +482,13 @@ namespace OctData
 					transformImage(reg, angioImg, false, cv::INTER_NEAREST);
 				bscan->setAngioImage(angioImg);
 			}
-			series.takeBScan(bscan);
+			series.addBScan(std::move(bscan));
+		}
+		
+		std::string toLower(std::string data)
+		{
+			std::transform(data.begin(), data.end(), data.begin(), [](char c){ return std::tolower(c); });
+			return data;
 		}
 	}
 
@@ -494,9 +500,11 @@ namespace OctData
 
 	bool HeE2ERead::readFile(FileReader& filereader, OCT& oct, const FileReadOptions& op, CppFW::Callback* callback)
 	{
-		const boost::filesystem::path& file = filereader.getFilepath();
+		const std::filesystem::path& file = filereader.getFilepath();
+		
+		std::string fileExtLower = toLower(file.extension().generic_string());
 
-		if(file.extension() != ".E2E" && file.extension() != ".sdb")
+		if(fileExtLower != ".e2e" && fileExtLower != ".sdb")
 			return false;
 
 		if(!bfs::exists(file))
@@ -535,7 +543,7 @@ namespace OctData
 
 				BOOST_LOG_TRIVIAL(debug) << "try to open patient informations file: " << buffer;
 				// std::string filenname =
-				bfs::path patientDataFile(file.branch_path() / buffer);
+				bfs::path patientDataFile(file.parent_path() / buffer);
 				if(bfs::exists(patientDataFile))
 					e2eData.readE2EFile(patientDataFile.generic_string());
 
@@ -543,7 +551,7 @@ namespace OctData
 				{
 					std::snprintf(buffer, bufferSize, "%08d.edb", e2eStudyPair.first);
 					BOOST_LOG_TRIVIAL(debug) << "try to open series informations file: " << buffer;
-					bfs::path studyDataFile(file.branch_path() / buffer);
+					bfs::path studyDataFile(file.parent_path() / buffer);
 					if(bfs::exists(studyDataFile))
 						e2eData.readE2EFile(studyDataFile.generic_string());
 				}

@@ -6,10 +6,10 @@
 #include<iomanip>
 #include<array>
 #include<cmath>
+#include<filesystem>
 
 #include <boost/log/trivial.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/filesystem.hpp>
 
 #include <opencv2/opencv.hpp>
 
@@ -28,7 +28,7 @@
 #include "readjpeg2k.h"
 #include "topcondata.h"
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 
 namespace
@@ -185,11 +185,11 @@ namespace
 		switch(sloType)
 		{
 			case SLOType::Fundus:
-				data.sloFundus.sloImage = new OctData::SloImage;
+				data.sloFundus.sloImage = std::make_unique<OctData::SloImage>();
 				data.sloFundus.sloImage->setImage(image);
 				break;
 			case SLOType::TRC:
-				data.sloTRC.sloImage = new OctData::SloImage;
+				data.sloTRC.sloImage = std::make_unique<OctData::SloImage>();
 				data.sloTRC.sloImage->setImage(image);
 				break;
 		}
@@ -487,7 +487,7 @@ namespace OctData
 
 	bool TopconFileFormatRead::readFile(FileReader& filereader, OCT& oct, const FileReadOptions& op, CppFW::Callback* callback)
 	{
-		const boost::filesystem::path& file = filereader.getFilepath();
+		const std::filesystem::path& file = filereader.getFilepath();
 //
 //     BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
 //     BOOST_LOG_TRIVIAL(debug) << "A debug severity message";
@@ -502,10 +502,10 @@ namespace OctData
 		BOOST_LOG_TRIVIAL(trace) << "Try to open OCT file as topcon file";
 
 
-		std::fstream stream(filepathConv(file), std::ios::binary | std::ios::in);
+		std::fstream stream(file, std::ios::binary | std::ios::in);
 		if(!stream.good())
 		{
-			BOOST_LOG_TRIVIAL(error) << "Can't open topcon file " << filepathConv(file);
+			BOOST_LOG_TRIVIAL(error) << "Can't open topcon file " << file;
 			return false;
 		}
 

@@ -19,32 +19,26 @@
 
 namespace OctData
 {
-	void OCT::findSeries(const OctData::Series* const seriesReq, const OctData::Patient*& pat, const OctData::Study*& study) const
+	std::tuple<std::shared_ptr<const Patient>, std::shared_ptr<const Study>> OCT::findSeries(const std::shared_ptr<const Series>& seriesReq) const
 	{
-		pat   = nullptr;
-		study = nullptr;
-
-		if(seriesReq == nullptr)
-			return;
+		if(!seriesReq)
+			return {nullptr, nullptr};
 
 		// Search series
 		for(const OCT::SubstructurePair& patientPair : *this)
 		{
-			const Patient* actPatient = patientPair.second;
+			const OCT::SubstructureTypePtr& actPatient = patientPair.second;
 			for(const Patient::SubstructurePair& studyPair : *actPatient)
 			{
-				const Study* actStudy = studyPair.second;
+				const Patient::SubstructureTypePtr& actStudy = studyPair.second;
 				for(const Study::SubstructurePair& seriesPair : *actStudy)
 				{
-					const Series* series = seriesPair.second;
+					const Study::SubstructureTypePtr& series = seriesPair.second;
 					if(series == seriesReq)
-					{
-						pat   = actPatient;
-						study = actStudy;
-						return;
-					}
+						return {actPatient, actStudy};
 				}
 			}
 		}
+		return {nullptr, nullptr};
 	}
 }

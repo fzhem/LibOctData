@@ -19,23 +19,23 @@
 
 #include<iomanip>
 #include<exception>
+#include<filesystem>
 
 #include<boost/log/trivial.hpp>
 
 #include<import/platform_helper.h>
 
-#include <boost/filesystem.hpp>
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 namespace OctData
 {
 
-	FileStreamDircet::FileStreamDircet(const boost::filesystem::path& filepath)
+	FileStreamDircet::FileStreamDircet(const std::filesystem::path& filepath)
 	{
-		stream.open(filepathConv(filepath), std::ios::binary | std::ios::in);
+		stream.open(filepath, std::ios::binary | std::ios::in);
 		if(!stream.good())
 		{
-			BOOST_LOG_TRIVIAL(error) << "Can't open file stream " << filepathConv(filepath);
+			BOOST_LOG_TRIVIAL(error) << "Can't open file stream " << filepath;
 			throw("Can't open file stream"); // TODO
 		}
 	}

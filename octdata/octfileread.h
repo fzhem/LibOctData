@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <filesystem>
 
 #include "octextension.h"
 
@@ -27,8 +28,6 @@
 #else
 	#define Octdata_EXPORTS
 #endif
-
-namespace boost { namespace filesystem { class path; } }
 
 namespace CppFW { class Callback; }
 
@@ -49,14 +48,14 @@ namespace OctData
 
 		Octdata_EXPORTS static const OctExtensionsList& supportedExtensions();
 		Octdata_EXPORTS static OCT openFile(const std::string& filename, const FileReadOptions& op, CppFW::Callback* callback = nullptr);
-		Octdata_EXPORTS static OCT openFile(const boost::filesystem::path& filename, const FileReadOptions& op, CppFW::Callback* callback = nullptr);
+		Octdata_EXPORTS static OCT openFile(const std::filesystem::path& filename, const FileReadOptions& op, CppFW::Callback* callback = nullptr);
 		Octdata_EXPORTS static OCT openFile(const std::string& filename, CppFW::Callback* callback = nullptr);
 
 		Octdata_EXPORTS static bool isLoadable(const std::string& filename);
 
 		Octdata_EXPORTS static bool writeFile(const std::string& filename, const OCT& octdata);
 		Octdata_EXPORTS static bool writeFile(const std::string& filename, const OCT& octdata, const FileWriteOptions& opt);
-		Octdata_EXPORTS static bool writeFile(const boost::filesystem::path& filepath, const OCT& octdata, const FileWriteOptions& opt);
+		Octdata_EXPORTS static bool writeFile(const std::filesystem::path& filepath, const OCT& octdata, const FileWriteOptions& opt);
 
 	private:
 		OctFileRead();
@@ -64,9 +63,9 @@ namespace OctData
 
 		void registerFileRead(OctFileReader* reader);
 		OCT openFilePrivat(const std::string& filename, const FileReadOptions& op, CppFW::Callback* callback);
-		OCT openFilePrivat(const boost::filesystem::path& file, const FileReadOptions& op, CppFW::Callback* callback);
+		OCT openFilePrivat(const std::filesystem::path& file, const FileReadOptions& op, CppFW::Callback* callback);
 
-		bool writeFilePrivat(const boost::filesystem::path& filepath, const OCT& octdata, const FileWriteOptions& opt);
+		bool writeFilePrivat(const std::filesystem::path& filepath, const OCT& octdata, const FileWriteOptions& opt);
 
 		bool openFileFromExt(OCT& oct, FileReader& filename, const FileReadOptions& op, CppFW::Callback* callback);
 		bool tryOpenFile(OCT& oct, FileReader& filename, const FileReadOptions& op, CppFW::Callback* callback);

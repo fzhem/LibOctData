@@ -1,10 +1,11 @@
 #include "giplread.h"
 
+#include<filesystem>
+
 #include<boost/endian/arithmetic.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 #include <opencv2/opencv.hpp>
 
@@ -178,10 +179,10 @@ namespace OctData
 			reader.convertImage(bscanImage);
 
 			BScan::Data bscanData;
-			BScan* bscan = new BScan(bscanImage, bscanData);
+			std::shared_ptr<BScan> bscan = std::make_shared<BScan>(bscanImage, bscanData);
 			if(op.holdRawData)
 				bscan->setRawImage(bscanImage);
-			series.takeBScan(bscan);
+			series.addBScan(std::move(bscan));
 		}
 	}
 

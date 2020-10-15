@@ -9,10 +9,9 @@
 #include <ostream>
 #include <fstream>
 #include <iomanip>
+#include<filesystem>
 
 #include <opencv2/opencv.hpp>
-
-#include <boost/filesystem.hpp>
 
 #include "../platform_helper.h"
 #include <filereadoptions.h>
@@ -23,7 +22,7 @@
 
 #include<filereader/filereader.h>
 
-namespace bfs = boost::filesystem;
+namespace bfs = std::filesystem;
 
 
 namespace
@@ -335,10 +334,10 @@ namespace
 						return;
 				}
 
-				OctData::BScan* bscan = new OctData::BScan(viewImage.t(), bscanData);
+				std::shared_ptr<OctData::BScan> bscan = std::make_shared<OctData::BScan>(viewImage.t(), bscanData);
 				if(op.holdRawData && !rawImage.empty())
 					bscan->setRawImage(rawImage);
-				series.takeBScan(bscan);
+				series.addBScan(std::move(bscan));
 			}
 			else
 			{
@@ -410,7 +409,7 @@ namespace OctData
 
 	bool OctFileFormatRead::readFile(FileReader& filereader, OCT& oct, const FileReadOptions& op, CppFW::Callback* callback)
 	{
-		const boost::filesystem::path& file = filereader.getFilepath();
+		const std::filesystem::path& file = filereader.getFilepath();
 //
 //     BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
 //     BOOST_LOG_TRIVIAL(debug) << "A debug severity message";
@@ -424,26 +423,20 @@ namespace OctData
 
 		BOOST_LOG_TRIVIAL(trace) << "Try to open OCT file as Bioptigen oct file";
 
-		boost::system::error_code ec;
-		boost::uintmax_t filesize = file_size(file, ec);
-		if(ec)
-		{
-			BOOST_LOG_TRIVIAL(error) << "can't read filesize";
-			filesize = 1;
-		}
+		boost::uintmax_t filesize = file_size(file);
 		CppFW::CallbackStepper callbackStepper(callback, filesize);
 
 
-		std::fstream stream(filepathConv(file), std::ios::binary | std::ios::in);
+		std::fstream stream(file, std::ios::binary | std::ios::in);
 		if(!stream.good())
 		{
-			BOOST_LOG_TRIVIAL(error) << "Can't open oct file " << filepathConv(file);
+			BOOST_LOG_TRIVIAL(error) << "Can't open oct file " << file;
 			return false;
 		}
 
 		BOOST_LOG_TRIVIAL(debug) << "open " << file.generic_string() << " as Bioptigen oct file";
 
-		std::string dir      = file.branch_path().generic_string();
+		std::string dir      = file.parent_path().generic_string();
 		std::string filename = file.filename   ().generic_string();
 
 		const unsigned char magicHeader[4] = { 0xa5, 0xa7, 0x7d, 0x0c };

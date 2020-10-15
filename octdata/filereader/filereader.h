@@ -19,10 +19,12 @@
 
 #include<type_traits>
 
-#include<boost/filesystem.hpp>
+#include<filesystem>
 #include<boost/endian/arithmetic.hpp>
+#include<boost/endian/conversion.hpp>
 
-#include<opencv/cv.hpp>
+
+#include<opencv2/opencv.hpp>
 
 
 #include<iostream>
@@ -45,8 +47,8 @@ namespace OctData
 	{
 		enum class Compressed { none, gzip };
 
-		const boost::filesystem::path filepath;
-		      boost::filesystem::path extension;
+		const std::filesystem::path filepath;
+		      std::filesystem::path extension;
 
 		mutable std::size_t filesize = 0;
 
@@ -76,11 +78,11 @@ namespace OctData
 
 
 	public:
-		FileReader(const boost::filesystem::path& filepath);
+		FileReader(const std::filesystem::path& filepath);
 		~FileReader();
 
-		const boost::filesystem::path& getFilepath()             const { return filepath; }
-		const boost::filesystem::path& getExtension()            const { return extension; }
+		const std::filesystem::path& getFilepath()             const { return filepath; }
+		const std::filesystem::path& getExtension()            const { return extension; }
 
 
 		bool openFile();
@@ -99,7 +101,7 @@ namespace OctData
 		void readString(std::string& dest, std::size_t num = 1)
 		{
 			dest.resize(num);
-			fileStream->read(const_cast<char*>(dest.data()), sizeof(std::string::value_type)*num); // TODO: c++17: remove const_cast
+			fileStream->read(dest.data(), sizeof(std::string::value_type)*num);
 		}
 
 

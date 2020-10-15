@@ -23,15 +23,15 @@
 #include"filestreamgzip.h"
 #include <import/platform_helper.h>
 
-namespace bfs = boost::filesystem;
+namespace sfs = std::filesystem;
 
 namespace OctData
 {
 
-	FileReader::FileReader(const boost::filesystem::path& filepath)
+	FileReader::FileReader(const std::filesystem::path& filepath)
 	: filepath(filepath)
 	{
-		const boost::filesystem::path ext = filepath.extension();
+		const std::filesystem::path ext = filepath.extension();
 		if(filepath.extension() == ".gz")
 		{
 			compressType = Compressed::gzip;
@@ -74,16 +74,18 @@ namespace OctData
 			switch(compressType)
 			{
 				case Compressed::none:
-					filesize = bfs::file_size(filepath);
+					filesize = sfs::file_size(filepath);
 					break;
 				case Compressed::gzip:
-					std::ifstream stream(filepathConv(filepath), std::ios::binary | std::ios::in);
+				{
+					std::ifstream stream(filepath, std::ios::binary | std::ios::in);
 					stream.seekg(-4, std::ios_base::end);
 					unsigned int size;
 					stream.read(reinterpret_cast<char*>(&size), sizeof(size));
 					boost::endian::little_to_native_inplace(size);
 					filesize = size;
 					break;
+				}
 			}
 		}
 

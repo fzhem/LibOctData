@@ -27,7 +27,7 @@ namespace OctData
 	{
 		std::fstream stream;
 	public:
-		FileStreamDircet(const boost::filesystem::path& filepath);
+		FileStreamDircet(const std::filesystem::path& filepath);
 
 
 		virtual std::streamsize read(char* dest, std::streamsize size) override

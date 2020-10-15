@@ -3,7 +3,7 @@
 
 #include "../octfilereader.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace OctData
 {
@@ -11,8 +11,8 @@ namespace OctData
 	
 	class HeXmlRead : public OctFileReader
 	{
-		boost::filesystem::path xmlFilename;
-		boost::filesystem::path xmlPath;
+		std::filesystem::path xmlFilename;
+		std::filesystem::path xmlPath;
 
 	public:
 		HeXmlRead();

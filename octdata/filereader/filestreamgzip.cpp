@@ -23,7 +23,7 @@
 namespace OctData
 {
 
-	FileStreamGZip::FileStreamGZip(const boost::filesystem::path& filepath)
+	FileStreamGZip::FileStreamGZip(const std::filesystem::path& filepath)
 	{
 		file = gzopen(filepath.generic_string().c_str(), "r");
 		gzbuffer(file, 128*1024);

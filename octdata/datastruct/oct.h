@@ -20,6 +20,8 @@
 #include "substructure_template.h"
 #include "patient.h"
 
+#include <tuple>
+
 namespace OctData
 {
 	class OCT : public SubstructureTemplate<Patient>
@@ -31,7 +33,7 @@ namespace OctData
 		Octdata_EXPORTS const Patient& getPatient(int patientId) const            { return *(substructureMap.at(patientId)); }
 		Octdata_EXPORTS void clear()                                              { clearSubstructure(); }
 
-		Octdata_EXPORTS void findSeries(const OctData::Series* series, const OctData::Patient*& pat, const OctData::Study*& study) const;
+		Octdata_EXPORTS std::tuple<std::shared_ptr<const Patient>, std::shared_ptr<const Study>> findSeries(const std::shared_ptr<const Series>& seriesReq) const;
 
 
 		template<typename T> void getSetParameter(T& /*getSet*/)       { }

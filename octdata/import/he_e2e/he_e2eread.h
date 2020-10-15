@@ -1,9 +1,9 @@
 #pragma once
+
 #include <string>
+#include<filesystem>
 
 #include "../octfilereader.h"
-
-#include <boost/filesystem.hpp>
 
 namespace OctData
 {

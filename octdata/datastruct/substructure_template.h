@@ -18,6 +18,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 
 
 #ifdef OCTDATA_EXPORT
@@ -35,16 +36,17 @@ namespace OctData
 		SubstructureTemplate(const SubstructureTemplate&)            = delete;
 		SubstructureTemplate& operator=(const SubstructureTemplate&) = delete;
 	public:
-		Octdata_EXPORTS SubstructureTemplate()                                       = default;
+		Octdata_EXPORTS SubstructureTemplate()                       = default;
 		Octdata_EXPORTS SubstructureTemplate(SubstructureTemplate&& o)          { swapSubstructure(o); }
 
 		SubstructureTemplate& operator=(SubstructureTemplate&& o)               { swapSubstructure(o); return *this; }
 
-		typedef Type                                     SubstructureType;
-		typedef std::pair<const IndexType, Type*>        SubstructurePair;
-		typedef std::map<IndexType, Type*>               SubstructureMap;
-		typedef typename SubstructureMap::iterator       SubstructureIterator;
-		typedef typename SubstructureMap::const_iterator SubstructureCIterator;
+		using SubstructureType     = Type                                    ;
+		using SubstructureTypePtr  = std::shared_ptr<Type>                   ;
+		using SubstructureMap      = std::map<IndexType, SubstructureTypePtr>;
+		using SubstructurePair     = typename SubstructureMap::value_type    ;
+		using SubstructureIterator = typename SubstructureMap::iterator      ;
+		using SubstructureCIterator= typename SubstructureMap::const_iterator;
 
 		Octdata_EXPORTS std::size_t subStructureElements() const                { return substructureMap.size();  }
 
@@ -55,20 +57,16 @@ namespace OctData
 		Octdata_EXPORTS std::size_t size()            const                     { return substructureMap.size();  }
 
 	protected:
-		void swapSubstructure(SubstructureTemplate& d)          { substructureMap.swap(d.substructureMap); }
+		void swapSubstructure(SubstructureTemplate& d)                          { substructureMap.swap(d.substructureMap); }
 
-		virtual ~SubstructureTemplate()
-		{
-			for(SubstructurePair obj : substructureMap)
-				delete obj.second;
-		}
+		virtual ~SubstructureTemplate() = default;
 
 		Type& getAndInsert(IndexType id)
 		{
 			SubstructureIterator it = substructureMap.find(id);
 			if(it == substructureMap.end())
 			{
-				std::pair<SubstructureIterator, bool> pit = substructureMap.emplace(id, new Type(id));
+				std::pair<SubstructureIterator, bool> pit = substructureMap.emplace(id, std::make_unique<Type>(id));
 				if(pit.second == false)
 					throw "SubstructureTemplate pit.second == false";
 				return *((pit.first)->second);
@@ -78,8 +76,6 @@ namespace OctData
 
 		void clearSubstructure()
 		{
-			for(SubstructurePair obj : substructureMap)
-				delete obj.second;
 			substructureMap.clear();
 		}
 
