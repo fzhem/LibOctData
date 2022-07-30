@@ -18,6 +18,7 @@
 #pragma once
 
 #include<ostream>
+#include<type_traits>
 
 #include "substructure_template.h"
 #include "study.h"
@@ -34,33 +35,49 @@ namespace OctData
 
 		enum class Sex { Unknown, Female, Male};
 		typedef ObjectWrapper<Sex> SexEnumWrapper;
+		
+		struct PatientData
+		{
+			std::string forename;
+			std::string surname ;
+			std::string title   ;
+			std::string id      ;
+			std::string uid     ;
+			std::string ancestry;
+
+			std::u16string diagnose;
+
+			Date birthdate      ;
+
+			Sex sex = Sex::Unknown;
+		};
 
 		static const char* getSexName(Sex sex);
-		const char* getSexName()          const                  { return getSexName(sex); }
+		const char* getSexName()          const                  { return getSexName(data.sex); }
 
-		const std::string& getForename () const                  { return forename ; }
-		const std::string& getSurname  () const                  { return surname  ; }
-		const std::string& getTitle    () const                  { return title    ; }
-		const std::string& getId       () const                  { return id       ; }
-		Sex                getSex      () const                  { return sex      ; }
-		const Date&        getBirthdate() const                  { return birthdate; }
+		const std::string& getForename () const                  { return data.forename ; }
+		const std::string& getSurname  () const                  { return data.surname  ; }
+		const std::string& getTitle    () const                  { return data.title    ; }
+		const std::string& getId       () const                  { return data.id       ; }
+		Sex                getSex      () const                  { return data.sex      ; }
+		const Date&        getBirthdate() const                  { return data.birthdate; }
 
-		const std::u16string& getDiagnose() const                { return diagnose;  }
+		const std::u16string& getDiagnose() const                { return data.diagnose;  }
 
 
-		void setForename (const std::string& v)                  { forename  = v ; }
-		void setSurname  (const std::string& v)                  { surname   = v ; }
-		void setTitle    (const std::string& v)                  { title     = v ; }
-		void setId       (const std::string& v)                  { id        = v ; }
-		void setSex      (const Sex          v)                  { sex       = v ; }
-		void setBirthdate(const Date&       bd)                  { birthdate = bd; }
+		void setForename (const std::string& v)                  { data.forename  = v ; }
+		void setSurname  (const std::string& v)                  { data.surname   = v ; }
+		void setTitle    (const std::string& v)                  { data.title     = v ; }
+		void setId       (const std::string& v)                  { data.id        = v ; }
+		void setSex      (const Sex          v)                  { data.sex       = v ; }
+		void setBirthdate(const Date&       bd)                  { data.birthdate = bd; }
 
-		void setDiagnose (const std::u16string& v)               { diagnose  = v ; }
+		void setDiagnose (const std::u16string& v)               { data.diagnose  = v ; }
 
-		const std::string& getPatientUID() const                 { return uid; }
-		void setPatientUID(const std::string& id)                { uid = id  ; }
-		const std::string& getAncestry() const                   { return ancestry; }
-		void setAncestry (const std::string& v)                  { ancestry  = v ; }
+		const std::string& getPatientUID() const                 { return data.uid; }
+		void setPatientUID(const std::string& id)                { data.uid = id  ; }
+		const std::string& getAncestry() const                   { return data.ancestry; }
+		void setAncestry (const std::string& v)                  { data.ancestry  = v ; }
 
 
 		      Study& getInsertId(int id)                               { return getAndInsert(id) ; }
@@ -70,10 +87,13 @@ namespace OctData
 
 		int getInternalId() const                                      { return internalId; }
 
+		void clear()                                              { clearSubstructure(); }
 
 		template<typename T> void getSetParameter(T& getSet)           { getSetParameter(getSet, *this); }
 		template<typename T> void getSetParameter(T& getSet)     const { getSetParameter(getSet, *this); }
 
+		const PatientData& getPatientData() const { return data; }
+		void setPatientData(const PatientData& patData) { data = patData; }
 
 		struct PrintOptions
 		{
@@ -97,22 +117,13 @@ namespace OctData
 	private:
 		const int internalId;
 
-		std::string forename;
-		std::string surname ;
-		std::string title   ;
-		std::string id      ;
-		std::string uid     ;
-		std::string ancestry;
-
-		std::u16string diagnose;
-
-		Date birthdate      ;
-
-		Sex sex = Sex::Unknown;
+		
+		PatientData data;
 
 		template<typename T, typename ParameterSet>
-		static void getSetParameter(T& getSet, ParameterSet& p)
+		static void getSetParameter(T& getSet, ParameterSet& pat)
 		{
+			auto& p = pat.data;
 			SexEnumWrapper sexWrapper(p.sex);
 			DateWrapper    birthDateWrapper(p.birthdate);
 

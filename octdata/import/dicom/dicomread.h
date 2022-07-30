@@ -19,7 +19,7 @@ namespace OctData
 	{
 		bool readDicomDir(const std::filesystem::path& file, OCT& oct);
 
-		void decodeImage(Series& series, const FileReadOptions& op, char* pixData, std::size_t length);
+		void decodeImage(Series& series, const FileReadOptions& op, const char* pixData, std::size_t length);
 
 		void readPixelData(DcmElement* element, Series& series, const FileReadOptions& op, CppFW::Callback* callback);
 		void readPixelItem(DcmPixelSequence* dseq, Series& series, const FileReadOptions& op, unsigned long i);

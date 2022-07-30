@@ -45,6 +45,7 @@ namespace OctData
 	public:
 		explicit Study(int internalId) : internalId(internalId)   {}
 
+		void insertSeries(int id, std::shared_ptr<Series> series) { insert(id, std::move(series)); }
 		      Series& getInsertId(int id)                              { return getAndInsert(id) ; }
 
 		      Series& getSeries(int seriesId)                     { return getAndInsert        (seriesId) ; }
@@ -65,6 +66,14 @@ namespace OctData
 		void setStudyDate    (const Date&        d)               { studyDate     = d; }
 
 		int getInternalId() const                                      { return internalId; }
+		
+		void clear()                                              { clearSubstructure(); }
+		
+		void copySeries(const Study& study, int seriesId)
+		{
+			insertSeries(seriesId, study.substructureMap.at(seriesId));
+		}
+		
 
 
 		template<typename T> void getSetParameter(T& getSet)           { getSetParameter(getSet, *this); }

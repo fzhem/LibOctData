@@ -66,12 +66,19 @@ namespace OctData
 			SubstructureIterator it = substructureMap.find(id);
 			if(it == substructureMap.end())
 			{
-				std::pair<SubstructureIterator, bool> pit = substructureMap.emplace(id, std::make_unique<Type>(id));
+				std::pair<SubstructureIterator, bool> pit = substructureMap.emplace(id, std::make_shared<Type>(id));
 				if(pit.second == false)
 					throw "SubstructureTemplate pit.second == false";
 				return *((pit.first)->second);
 			}
 			return *(it->second);
+		};
+		
+		void insert(IndexType id, SubstructureTypePtr data)
+		{
+			std::pair<SubstructureIterator, bool> pit = substructureMap.emplace(id, std::move(data));
+			if(pit.second == false)
+				throw "SubstructureTemplate pit.second == false";
 		};
 
 		void clearSubstructure()

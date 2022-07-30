@@ -225,8 +225,8 @@ GENERATE_EXPORT_HEADER(octdata           # generates the export header shared_EX
 
 target_compile_definitions(octdata PRIVATE "octdata_EXPORTS")
 
-add_executable(liboctdata_test main.cpp)
-target_link_libraries(liboctdata_test octdata ${OpenCV_LIBRARIES} )
+#add_executable(liboctdata_test main.cpp)
+#target_link_libraries(liboctdata_test octdata ${OpenCV_LIBRARIES} )
 
 
 
@@ -246,7 +246,7 @@ file(GLOB liboctdata_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/octdata/*.h" "${CMAKE_
 install(
   FILES
     ${liboctdata_HEADERS}
-    "${CMAKE_CURRENT_BINARY_DIR}/octdata_export.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/octdata_EXPORTS.h"
   DESTINATION
     include
   COMPONENT

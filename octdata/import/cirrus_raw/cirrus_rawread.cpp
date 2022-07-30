@@ -187,9 +187,9 @@ end
 			cv::Mat bscanImage;
 // 			readCVImage<uint8_t>(stream, bscanImage, volSizeZ, volSizeX);
 			filereader.readCVImage<uint8_t>(bscanImage, volSizeZ, volSizeX);
-// 			cv::flip(bscanImage, bscanImage, -1);
-			cv::transpose(bscanImage, bscanImage);
-			cv::flip(bscanImage, bscanImage, 1);
+			cv::flip(bscanImage, bscanImage, -1);
+// 			cv::transpose(bscanImage, bscanImage);
+// 			cv::flip(bscanImage, bscanImage, 1);
 
 			bscanList.push_back(std::make_shared<BScan>(bscanImage, data));
 		}
