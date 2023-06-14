@@ -171,7 +171,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/octdata/buildconstants.cpp.in" "${CM
 list(APPEND liboctdata_SRCS "${CMAKE_CURRENT_BINARY_DIR}/buildconstants.cpp")
 
 
-set(srcs_directories datastruct ${import_srcs} "export/cvbin" "export/cirrus_raw" "export/xoct")
+set(srcs_directories datastruct ${import_srcs} "export/cvbin" "export/cirrus_raw" "export/xoct" "export/he_vol")
 foreach(loop_var ${srcs_directories})
 	file(GLOB sources_base "${CMAKE_CURRENT_SOURCE_DIR}/octdata/${loop_var}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/octdata/${loop_var}/*.c")
 	list(APPEND liboctdata_SRCS ${sources} ${sources_base})

@@ -39,6 +39,7 @@ namespace sfs = std::filesystem;
 #include<export/cirrus_raw/cirrusrawexport.h>
 #include<export/xoct/xoctwrite.h>
 #include<export/cvbin/cvbinoctwrite.h>
+#include<export/he_vol/volwrite.h>
 
 namespace OctData
 {
@@ -184,6 +185,8 @@ namespace OctData
 			return CirrusRawExport::writeFile(filepath, octdata, opt);
 		if(filepath.extension() == ".xoct")
 			return XOctWrite::writeFile(filepath, octdata, opt);
+		if(filepath.extension() == ".vol")
+			return VolWrite::writeFile(filepath, octdata, opt);
 		return CvBinOctWrite::writeFile(filepath, octdata, opt);
 	}
 

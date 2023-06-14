@@ -1,4 +1,6 @@
 #include "volread.h"
+#include "voldatastruct.h"
+
 #include <datastruct/oct.h>
 #include <datastruct/coordslo.h>
 #include <datastruct/sloimage.h>
@@ -9,10 +11,10 @@
 #include <chrono>
 #include <ctime>
 #include<filesystem>
+#include<optional>
 
 #include <opencv2/opencv.hpp>
 
-#include "../../octdata_packhelper.h"
 #include <filereadoptions.h>
 
 #include <boost/log/trivial.hpp>
@@ -20,8 +22,6 @@
 
 #include <emmintrin.h>
 #include <oct_cpp_framework/callback.h>
-
-#include<boost/optional.hpp>
 
 #include<filereader/filereader.h>
 
@@ -46,154 +46,8 @@ namespace
 		stream.read(reinterpret_cast<char*>(image.data), num*sizeof(T));
 	}
 
-	struct VolHeader
-	{
-		PACKSTRUCT(struct RawData
-		{
-			// char HSF-OCT-        [ 8]; // check first in function
-			char     version     [ 4];
-			uint32_t sizeX           ;
-			uint32_t numBScans       ;
-			uint32_t sizeZ           ;
-			double   scaleX          ;
-			double   distance        ;
-			double   scaleZ          ;
-			uint32_t sizeXSlo        ;
-			uint32_t sizeYSlo        ;
-			double   scaleXSlo       ;
-			double   scaleYSlo       ;
-			uint32_t fieldSizeSlo    ;
-			double   scanFocus       ;
-			char     scanPosition[ 4];
-			uint64_t examTime        ;
-			uint32_t scanPattern     ;
-			uint32_t bScanHdrSize    ;
-			char     id          [16];
-			char     referenceID [16];
-			uint32_t pid             ;
-			char     patientID   [21];
-			char     padding     [ 3];
-			double   dob             ; // Patient date of birth
-			uint32_t vid             ;
-			char     visitID     [24];
-			double   visitDate       ;
-			int32_t  gridType        ;
-			int32_t  gridOffset      ;
-			char     spare       [ 8];
-			char     progID      [32];
-		});
-		RawData data;
 
-		void printData(std::ostream& stream)
-		{
-			stream << "version     : " << data.version      << '\n';
-			stream << "sizeX       : " << data.sizeX        << '\n';
-			stream << "numBScans   : " << data.numBScans    << '\n';
-			stream << "sizeZ       : " << data.sizeZ        << '\n';
-			stream << "scaleX      : " << data.scaleX       << '\n';
-			stream << "distance    : " << data.distance     << '\n';
-			stream << "scaleZ      : " << data.scaleZ       << '\n';
-			stream << "sizeXSlo    : " << data.sizeXSlo     << '\n';
-			stream << "sizeYSlo    : " << data.sizeYSlo     << '\n';
-			stream << "scaleXSlo   : " << data.scaleXSlo    << '\n';
-			stream << "scaleYSlo   : " << data.scaleYSlo    << '\n';
-			stream << "fieldSizeSlo: " << data.fieldSizeSlo << '\n';
-			stream << "scanFocus   : " << data.scanFocus    << '\n';
-			stream << "scanPosition: " << data.scanPosition << '\n';
-			stream << "examTime    : " << data.examTime     << '\t' << OctData::Date::fromWindowsTicks(data.examTime).timeDateStr() << '\n';
-			stream << "scanPattern : " << data.scanPattern  << '\n';
-			stream << "bScanHdrSize: " << data.bScanHdrSize << '\n';
-			stream << "id          : " << data.id           << '\n';
-			stream << "referenceID : " << data.referenceID  << '\n';
-			stream << "pid         : " << data.pid          << '\n';
-			stream << "patientID   : " << data.patientID    << '\n';
-			stream << "padding     : " << data.padding      << '\n';
-			stream << "dob         : " << data.dob          << '\t' << OctData::Date::fromWindowsTimeFormat(data.dob).timeDateStr()<< '\n';
-			stream << "vid         : " << data.vid          << '\n';
-			stream << "visitID     : " << data.visitID      << '\n';
-			stream << "visitDate   : " << data.visitDate    << '\t' << OctData::Date::fromWindowsTimeFormat(data.visitDate).timeDateStr()<< '\n';
-			stream << "gridType    : " << data.gridType     << '\n';
-			stream << "gridOffset  : " << data.gridOffset   << '\n';
-			stream << "progID      : ";
-			for(std::size_t i=0; i<sizeof(data.progID) && data.progID[i] != 0; ++i)
-				stream << data.progID[i];
-			stream << std::endl;
-		}
-
-		std::size_t getSLOPixelSize() const   {
-			return data.sizeXSlo*data.sizeYSlo;
-		}
-		std::size_t getBScanPixelSize() const {
-			return data.sizeX   *data.sizeZ   *sizeof(float);
-		}
-		std::size_t getBScanSize() const      {
-			return getBScanPixelSize() + data.bScanHdrSize;
-		}
-
-		constexpr static std::size_t getHeaderSize() {
-			return 2048;
-		}
-
-	};
-
-	struct BScanHeader
-	{
-		PACKSTRUCT(struct Data
-		{
-			char     hsfOctRawStr[ 7];
-			char     version     [ 5];
-			uint32_t bscanHdrSize    ;
-			double   startX          ;
-			double   startY          ;
-			double   endX            ;
-			double   endY            ;
-			int32_t  numSeg          ;
-			int32_t  offSeg          ;
-			float    quality         ;
-			int32_t  shift           ;
-		});
-
-		constexpr static const std::size_t identiferSize = sizeof(Data::hsfOctRawStr)/sizeof(Data::hsfOctRawStr[0]);
-
-		Data data;
-
-		void printData() const
-		{
-			std::cout << data.startX  << '\t'
-			          << data.startY  << '\t'
-			          << data.endX    << '\t'
-			          << data.endY    << '\t'
-			          << data.numSeg  << '\t'
-			          << data.offSeg  << '\t'
-			          << data.quality << '\t'
-			          << data.shift   << std::endl;
-
-		}
-
-	};
-
-	struct ThicknessGrid
-	{
-		PACKSTRUCT(struct Data
-		{
-			int    gridType     ;
-			double diameterA    ;
-			double diameterB    ;
-			double diameterC    ;
-			double centerPosXmm ;
-			double centerPosYmm ;
-			float  centralThk   ;
-			float  minCentralThk;
-			float  maxCentralThk;
-			float  totalVolume  ;
-			// sectors
-		});
-
-		Data data;
-	};
-
-
-	void copyMetaData(const VolHeader& header, OctData::Patient& pat, OctData::Study& study, OctData::Series& series)
+	void copyMetaData(const OctData::VolHeader& header, OctData::Patient& pat, OctData::Study& study, OctData::Series& series)
 	{
 		// Patient data
 		pat.setId(header.data.patientID);
@@ -383,7 +237,7 @@ namespace OctData
 			// bscanHeader.printData();
 
 
-			typedef boost::optional<Segmentationlines::SegmentlineType> SegLineOpt;
+			typedef std::optional<Segmentationlines::SegmentlineType> SegLineOpt;
 			const SegLineOpt seglines[] =
 			{
 				Segmentationlines::SegmentlineType::ILM ,   // 0

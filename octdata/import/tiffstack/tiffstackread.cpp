@@ -53,7 +53,7 @@ namespace OctData
 
 			// http://www.libtiff.org/man/TIFFGetField.3t.html
 			
-			uint32 imageWidth, imageLength;
+			uint32_t imageWidth, imageLength;
 // 			uint32 tileWidth, tileLength;
 
 			do {
