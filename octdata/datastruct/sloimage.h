@@ -19,6 +19,8 @@
 
 #include "coordslo.h"
 
+#include<memory>
+
 namespace cv { class Mat; }
 
 
@@ -33,8 +35,7 @@ namespace OctData
 {
 	class SloImage
 	{
-		cv::Mat*    image    = nullptr;
-		// std::string filename;
+		std::unique_ptr<cv::Mat> image;
 
 		ScaleFactor scaleFactor;
 		CoordSLOpx  shift;
@@ -67,12 +68,12 @@ namespace OctData
 
 		SloImage(const SloImage& other)            = delete;
 		SloImage& operator=(const SloImage& other) = delete;
+		
+		SloImage(SloImage&& other)            = default;
+		SloImage& operator=(SloImage&& other) = default;
 
 		const cv::Mat& getImage()                   const           { return *image                 ; }
 		Octdata_EXPORTS void setImage(const cv::Mat& image);
-
-// 		const std::string& getFilename()             const          { return filename               ; }
-// 		void               setFilename(const std::string& s)        {        filename = s           ; }
 
 		const ScaleFactor&    getScaleFactor()         const        { return scaleFactor            ; }
 		const CoordSLOpx&     getShift()               const        { return shift                  ; }
@@ -84,7 +85,7 @@ namespace OctData
 		int    getNumAverage()                      const           { return numAverage             ; }
 		int    getImageQuality()                    const           { return imageQuality           ; }
 
-		bool  hasImage()                            const           { return image                  ; }
+		Octdata_EXPORTS bool  hasImage()            const;
 		Octdata_EXPORTS int   getWidth()            const;
 		Octdata_EXPORTS int   getHeight()           const;
 

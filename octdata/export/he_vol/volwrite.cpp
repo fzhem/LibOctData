@@ -108,12 +108,20 @@ namespace OctData
 			
 			header.data.bScanHdrSize = 256;
 			header.data.numBScans = static_cast<uint32_t>(series.bscanCount());
-			header.data.sizeXSlo  = static_cast<uint32_t>(series.getSloImage().getWidth());
-			header.data.sizeYSlo  = static_cast<uint32_t>(series.getSloImage().getHeight());
 			header.data.sizeX     = static_cast<uint32_t>(bscan->getWidth());
 			header.data.sizeZ     = static_cast<uint32_t>(bscan->getHeight());
-			header.data.scaleXSlo = sloImage.getScaleFactor().getX();
-			header.data.scaleYSlo = sloImage.getScaleFactor().getY();
+			if(sloImage.hasImage())
+			{
+				header.data.sizeXSlo  = static_cast<uint32_t>(sloImage.getWidth());
+				header.data.sizeYSlo  = static_cast<uint32_t>(sloImage.getHeight());
+				header.data.scaleXSlo = sloImage.getScaleFactor().getX();
+				header.data.scaleYSlo = sloImage.getScaleFactor().getY();
+			}
+			else
+			{
+				header.data.sizeXSlo  = 1;
+				header.data.sizeYSlo  = 1;
+			}
 		}
 	}
 
@@ -188,9 +196,13 @@ namespace OctData
 		
 		// Write SLO
 		const SloImage& sloImage = series.getSloImage();
-		writeImage(sloImage.getImage());
-		
-		
+		if(sloImage.hasImage())
+			writeImage(sloImage.getImage());
+		else
+		{
+			uint8_t t = 0;
+			writeStruct(t);
+		}
 
 		const std::size_t numBScans = series.bscanCount();
 		// Read BScann

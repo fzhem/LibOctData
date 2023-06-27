@@ -30,11 +30,7 @@ namespace OctData
 	}
 
 
-	SloImage::~SloImage()
-	{
-		delete image;
-	}
-
+	SloImage::~SloImage() = default;
 
 	void SloImage::setImage(const cv::Mat& image)
 	{
@@ -43,16 +39,17 @@ namespace OctData
 
 	int SloImage::getHeight() const
 	{
-		if(image)
-			return image->rows;
-		return 0;
+		return image->rows;
 	}
 
 	int SloImage::getWidth() const
 	{
-		if(image)
-			return image->cols;
-		return 0;
+		return image->cols;
+	}
+	
+	bool SloImage::hasImage() const
+	{
+		return getHeight() > 0;
 	}
 
 
