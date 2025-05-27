@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(liboctdata)
 include(GenerateExportHeader)
 
@@ -205,7 +205,9 @@ ENDIF()
 
 if(DEFINED DCMTK_FOUND)
 	add_definitions(-DUSE_DCMTK)
-	target_link_libraries(octdata PRIVATE ${DCMTK_LIBRARIES})
+ 
+ 	target_link_libraries(octdata PRIVATE DCMTK::dcmdata DCMTK::dcmimgle)
+	target_include_directories(octdata PRIVATE ${DCMTK_INCLUDE_DIRS})
 endif()
 
 target_link_libraries(octdata PRIVATE ${OPENJPEG_LIBRARIES} ${TIFF_LIBRARIES} ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} ${ZLIB_LIBRARIES})
