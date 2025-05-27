@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <ctime>
 #include <cmath>
+#include <cstdint>
 
 #include<ostream>
 
