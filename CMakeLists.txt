@@ -286,7 +286,7 @@ install(EXPORT LibOctDataTargets
 )
 install(
   FILES
-    cmake/LibOctDataConfig.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/liboctdata/LibOctDataConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/liboctdata/LibOctDataConfigVersion.cmake"
   DESTINATION
     ${ConfigPackageLocation}
